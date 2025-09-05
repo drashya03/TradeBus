@@ -10,6 +10,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 
+
+
+const API_URL = import.meta.env.VITE_API_URL;
+
 const schema = z.object({
   name: z.string().min(2, "Enter your full name"),
   email: z.string().email("Enter a valid email"),
@@ -27,11 +31,27 @@ export default function Signup(){
   const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
-  async function onSubmit(values: FormValues){
-    await new Promise((r) => setTimeout(r, 700));
-    localStorage.setItem("auth", JSON.stringify({ name: values.name, email: values.email }));
-    toast.success("Account created");
-    navigate("/");
+  async function onSubmit(values: FormValues) {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: values.name,
+          email: values.email,
+          password: values.password
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Signup failed");
+      }
+      localStorage.setItem("auth", JSON.stringify({ name: data.name, email: data.email }));
+      toast.success("Account created");
+      navigate("/");
+    } catch (e: any) {
+      toast.error(e.message || "Signup failed");
+    }
   }
 
   return (

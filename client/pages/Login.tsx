@@ -10,6 +10,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
 
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+
+
 const schema = z.object({
   email: z.string().email("Enter a valid email"),
   password: z.string().min(8, "Password must be at least 8 characters"),
@@ -21,11 +26,23 @@ export default function Login(){
   const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
-  async function onSubmit(values: FormValues){
-    await new Promise((r) => setTimeout(r, 600));
-    localStorage.setItem("auth", JSON.stringify({ email: values.email }));
-    toast.success("Logged in successfully");
-    navigate("/");
+  async function onSubmit(values: FormValues) {
+    try {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(values)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Login failed");
+      }
+      localStorage.setItem("auth", JSON.stringify({ name: data.name, email: data.email }));
+      toast.success("Logged in successfully");
+      navigate("/");
+    } catch (e: any) {
+      toast.error(e.message || "Login failed");
+    }
   }
 
   return (

@@ -3,8 +3,11 @@ import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
 
-export function createServer() {
+export async function createServer() {
   const app = express();
+
+  // Connect to MongoDB
+  await connectDatabase();
 
   // Middleware
   app.use(cors());
@@ -18,6 +21,17 @@ export function createServer() {
   });
 
   app.get("/api/demo", handleDemo);
+
+  // User routes
+  app.get("/api/users", getUsers);
+  app.get("/api/users/:id", getUserById);
+  app.post("/api/users", createUser);
+
+  // Trade routes
+  app.get("/api/trades", getTrades);
+  app.get("/api/trades/user/:userId", getTradesByUserId);
+  app.post("/api/trades", createTrade);
+  app.patch("/api/trades/:id/status", updateTradeStatus);
 
   return app;
 }
